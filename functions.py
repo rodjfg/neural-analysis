@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-!pip install num2words
+
 
 def downsample_behavior_data(behavior_data, frequency):
     """
@@ -136,7 +136,6 @@ def model_fit(ds_neural_data, final_matrix, bin_size, features, start=0):
 
 
 import numpy as np
-import num2words
 from num2words import num2words
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
