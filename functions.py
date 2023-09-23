@@ -2,6 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+!pip install num2words
+
 def downsample_behavior_data(behavior_data, frequency):
     """
     Downsample behavior data to a specified frequency.
