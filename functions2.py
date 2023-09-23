@@ -136,12 +136,9 @@ def model_fit(ds_neural_data, final_matrix, bin_size, features, start=0):
 
 
 import numpy as np
-from num2words import num2words
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
 
-def number_to_words(n):
-    return num2words(n)
 
 def clean_string(s):
     s = s.replace('_', ' ')  # replace underscores with spaces
