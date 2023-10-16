@@ -3,6 +3,79 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
+import seaborn as sns
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+import pandas as pd
+
+def plot_data_analysis(df_list, title_list):
+    plt.rcParams['font.size'] = 14
+    plt.rcParams['font.family'] = 'Arial'
+
+    fig, axs = plt.subplots(3, 5, figsize=(55, 24), gridspec_kw={'hspace': 0.8, 'wspace': 0.5})
+
+    for idx, df in enumerate(df_list):
+        corr = df.corr()
+        mask = np.triu(np.ones_like(corr, dtype=bool))
+        cmap = sns.diverging_palette(230, 20, as_cmap=True)
+        sns.heatmap(corr, mask=mask, cmap=cmap, vmax=0.3, center=0, square=True, linewidths=0.5, cbar_kws={"shrink": 0.5}, ax=axs[0, idx])
+        axs[0, idx].set_title('Correlation Heatmap')
+
+        X = pd.concat([pd.Series(1, index=df.index, name='00'), df], axis=1)
+        vif = pd.DataFrame()
+        vif["variables"] = X.columns
+        vif["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+        vif.sort_values("VIF", ascending=False).plot(x="variables", y="VIF", kind='bar', legend=False, ax=axs[1, idx])
+        axs[1, idx].set_title('VIF values')
+        axs[1, idx].set_ylabel('VIF')
+
+        eigenvalues = []
+        condition_numbers = []
+        for i in range(1, len(df.columns) + 1):
+            X_subset = df.iloc[:, 0:i]
+            XTX = np.dot(X_subset.T, X_subset)
+            eigenvalue = np.linalg.eigvals(XTX)
+            eigenvalues.append(np.min(eigenvalue))
+            condition_numbers.append(np.linalg.cond(XTX))
+
+        ax1 = axs[2, idx].twinx()
+        ax2 = axs[2, idx].twinx()
+
+        ax1.spines['right'].set_position(('outward', 60))
+        ax1.yaxis.set_label_position("left")
+        ax1.yaxis.tick_left()
+
+        ax1.plot(range(1, len(df.columns) + 1), condition_numbers, color='red')
+        ax1.set_ylabel('Condition Number', color='red')
+        ax1.spines['left'].set_color('red')
+        ax1.spines['left'].set_linewidth(0.5)
+        ax1.tick_params(axis='y', labelcolor='red')
+
+        axs[2, idx].spines['left'].set_visible(False)
+        axs[2, idx].yaxis.set_visible(False)
+
+        ax2.plot(range(1, len(df.columns) + 1), eigenvalues, color='blue')
+        ax2.set_ylabel('Minimum Eigenvalue', color='blue')
+        ax2.spines['right'].set_color('blue')
+        ax2.spines['right'].set_linewidth(0.5)
+        ax2.tick_params(axis='y', labelcolor='blue')
+        ax2.set_ylim([np.min(eigenvalues), np.max(eigenvalues)])
+
+        axs[2, idx].set_xlabel('Number of features')
+        axs[2, idx].set_title('Minimum Eigenvalue and Condition Number of X\'X')
+        axs[2, idx].xaxis.set_major_locator(MultipleLocator(1))
+        axs[2, idx].set_xlim([1, len(df.columns)])
+
+    fig.subplots_adjust(hspace=0.8, wspace=0.5)
+    plt.show()
+
+# Example usage (when you want to use the function):
+# df_list = [beh_data_M1_D1, beh_data_M2_D1, ...]
+# title_list = ['Mouse 1', 'Mouse 2', ...]
+# plot_data_analysis(df_list, title_list)
 
 def downsample_behavior_data(behavior_data, frequency):
     """
