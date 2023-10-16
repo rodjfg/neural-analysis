@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 import pandas as pd
 
-def plot_data_analysis(df_list, title_list):
+def plot_diagnostics_analysis(df_list, title_list):
     plt.rcParams['font.size'] = 14
     plt.rcParams['font.family'] = 'Arial'
 
@@ -75,7 +75,7 @@ def plot_data_analysis(df_list, title_list):
 # Example usage (when you want to use the function):
 # df_list = [beh_data_M1_D1, beh_data_M2_D1, ...]
 # title_list = ['Mouse 1', 'Mouse 2', ...]
-# plot_data_analysis(df_list, title_list)
+# plot_diagnostics_analysis(df_list, title_list)
 
 def downsample_behavior_data(behavior_data, frequency):
     """
