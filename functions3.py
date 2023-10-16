@@ -1,16 +1,16 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
+import seaborn as sns
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+import pandas as pd
 
 def plot_diagnostics_analysis(df_list, title_list):
-    import matplotlib.pyplot as plt
-    from matplotlib.ticker import MultipleLocator
-    import seaborn as sns
-    from statsmodels.stats.outliers_influence import variance_inflation_factor
-    from sklearn.preprocessing import StandardScaler
-    import numpy as np
-    import pandas as pd
+
     plt.rcParams['font.size'] = 14
     plt.rcParams['font.family'] = 'Arial'
 
