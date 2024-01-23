@@ -149,13 +149,15 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-def model_fit(ds_neural_data, final_matrix, bin_size, features, start=0):
+def model_fit(ds_neural_data, final_matrix, raw_matrix, bin_size, features, start=0):
     """
     Process neural data and compute significance and beta coefficients.
 
     Args:
     - ds_neural_data (pd.DataFrame): The neural data.
     - final_matrix (pd.DataFrame): The final matrix.
+    - raw_matrix   (pd.DataFrame): Dataframe of behavior and task variables prior to being processed into final matrix.
+                    Must have column names. 
     - bin_size (int): The bin size.
     - features (int): The number of features.
     - start (int, optional): The start index. Default is 0.
@@ -197,9 +199,22 @@ def model_fit(ds_neural_data, final_matrix, bin_size, features, start=0):
         significance_matrix[neuron_k, :] = p_values_vector
     
     beta_coefficients_matrix_final=pd.DataFrame(data=beta_coefficients_matrix)
-    significance_matrix = pd.DataFrame(data=significance_matrix)#, columns=variable_names)
 
-
+    variable_names = raw_matrix.columns
+    names3=[]
+    
+    for var_names in variable_names:
+        for k in range(bin_size):
+            names2= var_names + ' beta' + str(k+1)
+            names3=np.append(names3,names2)
+            
+    names=np.append('ARX',names3)
+    names=np.append('intercept',names)
+    beta_coefficients_matrix_final.columns = names
+    
+    significance_matrix = pd.DataFrame(data=significance_matrix)
+    names_for_sig_m=list(raw_matrix.columns)
+    significance_matrix.columns = names_for_sig_m
 
     return beta_coefficients_matrix_final, significance_matrix
 
