@@ -142,9 +142,6 @@ def calculate_matrices(ds_neural_data, behavior_data_ds, bin_size=5):
     
     return final_matrix
 
-
-
-
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -218,10 +215,6 @@ def model_fit(ds_neural_data, final_matrix, raw_matrix, bin_size, features, star
 
     return beta_coefficients_matrix_final, significance_matrix
 
-
-
-
-
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
@@ -231,3 +224,22 @@ def clean_string(s):
     s = s.replace('_', ' ')  # replace underscores with spaces
     s = s.title()  # capitalize the first letter of each word
     return s
+
+
+def downsample_neural_data(neural_data, frequency):
+    """
+    Downsample neural data to a specified frequency.    Args:
+    - neural_data (pd.DataFrame): A Pandas DataFrame containing the neural data.
+    - frequency (str): The frequency to downsample to, in Pandas resample format (e.g. '100ms').    Returns:
+    - ds_neural_data (pd.DataFrame): A Pandas DataFrame containing the downsampled neural data."""
+    list_of_column_names = list(neural_data.columns)
+    series_list = []
+    for i in range(1, len(list_of_column_names)):
+        output = (neural_data.set_index(pd.to_timedelta(neural_data['Time'], unit='s'))
+                  [list_of_column_names[i]].resample(frequency).last())
+        output.fillna(method='bfill', inplace=True)
+        output.index = output.index.total_seconds()
+        series_list.append(output)
+        ds_neural_data = pd.concat(series_list, axis=1)
+    ds_neural_data.columns = list_of_column_names[1:]
+    return ds_neural_data
