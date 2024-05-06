@@ -182,7 +182,7 @@ def model_fit(ds_neural_data, final_matrix, raw_matrix, bin_size, features, star
         final_matrix_ARX = pd.concat([pd.DataFrame({'ARX': ARX}), final_matrix], axis=1)
         p_values_vector = []
         for i in range(1, len(final_matrix_ARX.columns), bin_size):
-            cols = list(range(i, i + bin_size))
+            #cols = list(range(i, i + bin_size))
             df_dropped_variable = final_matrix_ARX.drop(final_matrix_ARX.columns[cols], axis=1)
             model_1 = sm.OLS(y_variable, sm.add_constant(final_matrix_ARX)).fit()
             model_2 = sm.OLS(y_variable, sm.add_constant(df_dropped_variable)).fit()
