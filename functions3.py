@@ -171,8 +171,9 @@ def model_fit(ds_neural_data, final_matrix, raw_matrix, bin_size, features, star
     for neuron_k in range(num_neurons):
         print(neuron_k)
         neural_trace = ds_neural_data.iloc[:, neuron_k]
-        neural_trace = (neural_trace - np.mean(neural_trace[:300])) / np.std(neural_trace[:300])  # normalize to 1st 5 min
-        
+        #neural_trace = (neural_trace - np.mean(neural_trace[:300])) / np.std(neural_trace[:300])  # normalize to 1st 5 min
+        neural_trace = (neural_trace - np.mean(neural_trace)) / np.std(neural_trace)  # normalize to 1st 5 min
+
         y_variable = neural_trace.iloc[(start + bin_size - 1):]
         y_variable = list(y_variable)
         
