@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/db7c99af-d601-4fd3-b820-f6ab2112c553)
+
 # BehaviorNeuroLink: Neural Activity and Behavior Analysis Toolkit
 
 BehaviorNeuroLink is a Python package for analyzing the relationship between neural activity and behavior using multiple linear regression. It provides a  suite of tools for preprocessing calcium imaging data, constructing regression models, and interpreting the encoding of behavioral information in neural signals.
@@ -37,3 +39,4 @@ We welcome contributions! Please see our [contributing guidelines](CONTRIBUTING.
 ## License:
 
 BehavioralNeuralRegressor is released under the MIT License. See the [LICENSE](LICENSE) file for details.
+
