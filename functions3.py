@@ -172,7 +172,7 @@ def model_fit(ds_neural_data, final_matrix, raw_matrix, bin_size, features, star
         print(neuron_k)
         neural_trace = ds_neural_data.iloc[:, neuron_k]
         #neural_trace = (neural_trace - np.mean(neural_trace[:300])) / np.std(neural_trace[:300])  # normalize to 1st 5 min
-        neural_trace = (neural_trace - np.mean(neural_trace)) / np.std(neural_trace)  # normalize to 1st 5 min
+        neural_trace = (neural_trace - np.mean(neural_trace)) / np.std(neural_trace)  # normalize to whole session
 
         y_variable = neural_trace.iloc[(start + bin_size - 1):]
         y_variable = list(y_variable)
@@ -237,7 +237,7 @@ def downsample_neural_data(neural_data, frequency):
     series_list = []
     for i in range(1, len(list_of_column_names)):
         output = (neural_data.set_index(pd.to_timedelta(neural_data['Time'], unit='s'))
-                  [list_of_column_names[i]].resample(frequency).last())
+                  [list_of_column_names[i]].resample(frequency).mean())
         output.fillna(method='bfill', inplace=True)
         output.index = output.index.total_seconds()
         series_list.append(output)
