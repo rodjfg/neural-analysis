@@ -1,0 +1,197 @@
+#Import libraries and functions
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
+import seaborn as sns
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+def clean_string(s):
+    s = s.replace('_', ' ')  # replace underscores with spaces
+    s = s.title()  # capitalize the first letter of each word
+    return s
+
+#######################################################################################################################
+# Downsampling Function
+
+def downsample_behavior_data(behavior_data, frequency):
+    """
+    Downsample behavior data to a specified frequency.
+
+    Args:
+    - behavior_data (pd.DataFrame): A Pandas DataFrame containing the behavior data.
+    - frequency (str): The frequency to downsample to, in Pandas resample format (e.g., '500ms').
+
+    Returns:
+    - ds_behavior_data (pd.DataFrame): A Pandas DataFrame containing the downsampled behavior data.
+    """
+   
+    # Set 'Time' column as the index of the behavior_data dataframe, converting it to timedelta (in seconds)
+    behavior_data = behavior_data.set_index(pd.to_timedelta(behavior_data['Time'], unit='s'))
+
+    # Add an intercept column (B0 = 1 is the convention)
+    behavior_data = pd.concat([pd.Series(1, index=behavior_data.index, name='Intercept'), behavior_data], axis=1)
+
+    # Retrieve the list of column names
+    list_of_column_names = list(behavior_data.columns)
+
+    # Create an empty DataFrame where downsampled columns will be stored
+    ds_behavior_data = pd.DataFrame()
+
+    # Loop through each column for downsampling
+    for column in list_of_column_names:
+        if column in ['In platform', 'In REWARD ZONE', 'In Center']:
+            # For specific columns, take the last value within each resampling interval
+            output = behavior_data[column].resample(frequency).last()
+        else:
+            # For other columns, compute the mean within each resampling interval
+            output = behavior_data[column].resample(frequency).mean()
+        
+        # Handle missing data
+        if column in ['Tone', 'Shock']:
+            # For 'Tone' and 'Shock', fill NaN values with 0
+            output.fillna(0, inplace=True)
+        else:
+            # For other columns, backfill missing values
+            output.fillna(method='bfill', inplace=True)
+        
+        # Reset the index to total seconds (from timedelta)
+        output.index = output.index.total_seconds()
+
+        # Store the downsampled output in the new DataFrame
+        ds_behavior_data[column] = output
+   
+    return ds_behavior_data
+    
+################################################################
+
+  # Neural Data Downsampling Function
+# Here we are defining the neural data downsampling function
+# Named “def downsample_neural_data(neural_data, frequency):” in functions3 library
+def downsample_neural_data(neural_data, frequency):
+    """
+    Downsample neural data to a specified frequency.
+
+    Args:
+    - neural_data (pd.DataFrame): A Pandas DataFrame containing the neural data.
+    - frequency (str): The frequency to downsample to, in Pandas resample format (e.g., '100ms').
+
+    Returns:
+    - ds_neural_data (pd.DataFrame): A Pandas DataFrame containing the downsampled neural data.
+    """
+    
+    # Retrieve a list of neuron (cell) column names
+    list_of_neuron_names = list(neural_data.columns)
+    
+    # Create an empty DataFrame where downsampled columns will be stored
+    ds_neural_data = pd.DataFrame()
+    
+    # Remove the 'Time' column from the matrix and set it as the index (convert to timedelta in seconds)
+    neural_data = neural_data.set_index(pd.to_timedelta(neural_data['Time'], unit='s'))
+
+    # Loop through each neuron column, downsample, and store the result in a new DataFrame
+    for neuron in list_of_neuron_names:
+        # Remove missing values to ensure proper binning
+        output = neural_data[neuron].dropna()
+        
+        # Downsample by taking the mean of observations within the specified time range
+        output = output.resample(frequency).mean()
+        
+        # Set the time index to total seconds
+        output.index = output.index.total_seconds()
+        
+        # Store the downsampled neuron data in the ds_neural_data DataFrame
+        ds_neural_data[neuron] = output
+    
+    return ds_neural_data
+
+####################################################################################################
+# Function to plot multicollinearity diagnostics across multiple datasets
+def plot_diagnostics_analysis(df_list, title_list):
+    """
+    Plot multicollinearity diagnostics for a list of data frames.
+
+    The purpose is to identify variables that may be too dependent on one another. 
+    Create a list with the behavioral data frames you wish to plot for all mice and across sessions 
+    since diagnostics may differ between mice or across learning.
+
+    Args:
+    - df_list (list): A list of Pandas DataFrames containing behavioral and task data.
+      Example: df_list = [beh_data_M1_D1, beh_data_M2_D1, ...]
+    - title_list (list): A list with the titles (str) for each data frame inside df_list.
+      Example: title_list = ['Mouse 1', 'Mouse 2', ...]
+
+    Returns:
+    - Generates diagnostic plots for each data frame in df_list, including correlation heatmaps, 
+      VIF values, condition numbers, and minimum eigenvalues.
+    """
+    
+    # Set up font size for the graphs
+    plt.rcParams['font.size'] = 14
+    fig, axs = plt.subplots(3, 5, figsize=(55, 24), gridspec_kw={'hspace': 0.8, 'wspace': 0.5})
+
+    for idx, df in enumerate(df_list):
+        # Compute correlation matrix for each DataFrame
+        corr = df.corr()
+
+        # Create a mask to visualize only the upper triangle of the correlation matrix
+        mask = np.triu(np.ones_like(corr, dtype=bool))
+
+        # Define a color map for the heatmap plot
+        cmap = sns.diverging_palette(230, 20, as_cmap=True)
+
+        # Plot the correlation heatmap
+        sns.heatmap(corr, mask=mask, cmap=cmap, vmax=0.3, center=0, square=True, linewidths=0.5,
+                    cbar_kws={"shrink": 0.5}, ax=axs[0, idx])
+        axs[0, idx].set_title(f'Correlation Heatmap - {title_list[idx]}')
+
+        # Variance Inflation Factor (VIF) calculation
+        vif = pd.DataFrame()
+        vif["variables"] = df.columns
+        vif["VIF"] = [variance_inflation_factor(df.values, i) for i in range(df.shape[1])]
+
+        # Plot VIF values
+        vif.sort_values("VIF", ascending=False).plot(x="variables", y="VIF", kind='bar', legend=False, ax=axs[1, idx])
+        axs[1, idx].set_title(f'VIF values - {title_list[idx]}')
+        axs[1, idx].set_ylabel('VIF')
+
+        # Calculate eigenvalues and condition numbers for X'X matrix
+        eigenvalues = []
+        condition_numbers = []
+        for i in range(1, len(df.columns) + 1):
+            X_subset = df.iloc[:, 0:i]
+            XTX = np.dot(X_subset.T, X_subset)
+            eigenvalue = np.linalg.eigvals(XTX)
+            eigenvalues.append(np.min(eigenvalue))
+            condition_numbers.append(np.linalg.cond(XTX))
+
+        # Create two separate axes for the condition number and minimum eigenvalue plot
+        ax1 = axs[2, idx].twinx()
+        ax2 = axs[2, idx].twinx()
+
+        # Plot condition number on ax1
+        ax1.spines['right'].set_position(('outward', 60))
+        ax1.plot(range(1, len(df.columns) + 1), condition_numbers, color='red')
+        ax1.set_ylabel('Condition Number', color='red')
+        ax1.spines['left'].set_color('red')
+        ax1.tick_params(axis='y', labelcolor='red')
+
+        # Plot minimum eigenvalue on ax2
+        ax2.plot(range(1, len(df.columns) + 1), eigenvalues, color='blue')
+        ax2.set_ylabel('Minimum Eigenvalue', color='blue')
+        ax2.spines['right'].set_color('blue')
+        ax2.tick_params(axis='y', labelcolor='blue')
+        ax2.set_ylim([np.min(eigenvalues), np.max(eigenvalues)])
+
+        # Final plot settings
+        axs[2, idx].set_xlabel('Number of Features')
+        axs[2, idx].set_title(f'Minimum Eigenvalue and Condition Number - {title_list[idx]}')
+        axs[2, idx].xaxis.set_major_locator(MultipleLocator(1))
+        axs[2, idx].set_xlim([1, len(df.columns)])
+
+    # Adjust spacing between subplots
+    fig.subplots_adjust(hspace=0.8, wspace=0.5)
+    
+    # Show the plot
+    plt.show()
