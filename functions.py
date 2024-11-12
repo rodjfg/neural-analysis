@@ -82,15 +82,15 @@ def downsample_neural_data(neural_data, frequency):
     Returns:
     - ds_neural_data (pd.DataFrame): A Pandas DataFrame containing the downsampled neural data.
     """
-    
-    # Retrieve a list of neuron (cell) column names
-    list_of_neuron_names = list(neural_data.columns)
-    
+       
     # Create an empty DataFrame where downsampled columns will be stored
     ds_neural_data = pd.DataFrame()
     
     # Remove the 'Time' column from the matrix and set it as the index (convert to timedelta in seconds)
     neural_data = neural_data.set_index(pd.to_timedelta(neural_data['Time'], unit='s'))
+
+    # Retrieve a list of neuron (cell) column names
+    list_of_neuron_names = list(neural_data.columns)
 
     # Loop through each neuron column, downsample, and store the result in a new DataFrame
     for neuron in list_of_neuron_names:
