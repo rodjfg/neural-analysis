@@ -33,7 +33,7 @@ def downsample_behavior_data(behavior_data, frequency):
     behavior_data = behavior_data.set_index(pd.to_timedelta(behavior_data['Time'], unit='s'))
 
     # Add an intercept column (B0 = 1 is the convention)
-    behavior_data = pd.concat([pd.Series(1, index=behavior_data.index, name='Intercept'), behavior_data], axis=1)
+    #behavior_data = pd.concat([pd.Series(1, index=behavior_data.index, name='Intercept'), behavior_data], axis=1)
 
     # Retrieve the list of column names
     list_of_column_names = list(behavior_data.columns)
