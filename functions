@@ -6,6 +6,8 @@ from matplotlib.ticker import MultipleLocator
 import seaborn as sns
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.preprocessing import StandardScaler
+
+#######################################################################################################################
 scaler = StandardScaler()
 def clean_string(s):
     s = s.replace('_', ' ')  # replace underscores with spaces
@@ -13,7 +15,7 @@ def clean_string(s):
     return s
 
 #######################################################################################################################
-# Downsampling Function
+#Behavior Downsampling Function
 
 def downsample_behavior_data(behavior_data, frequency):
     """
@@ -195,3 +197,126 @@ def plot_diagnostics_analysis(df_list, title_list):
     
     # Show the plot
     plt.show()
+
+
+
+######################################################################################################
+
+def calculate_design_matrix(ds_neural_data, ds_behavior_data, bin_size=5):
+    """
+    Calculate the design matrix for a neural-behavioral data integration analysis.
+    
+    Args:
+        ds_neural_data (pd.DataFrame): Downsampled neural data.
+        ds_behavior_data (pd.DataFrame): Downsampled behavior data.
+        bin_size (int): Number of time steps to use as the time kernel. For example, if the data is binned in 500 ms intervals,
+                        a 2.5-second time kernel would be a bin size of 5 (2.5 sec / 0.5 sec). Default is 5.
+
+    Returns:
+        final_design_matrix (pd.DataFrame): A DataFrame containing the composite design matrix.
+    """
+    
+    # Number of behavioral and neural variables
+    number_of_behavioral_vars = ds_behavior_data.shape[1]
+    no_neurons = ds_neural_data.shape[1]
+    
+    # Initialize an empty list to store each variable's time-lagged matrices
+    matrices_list = []
+
+    # Step 1: Generate a time-lagged matrix for each behavioral variable
+    for j in range(number_of_behavioral_vars):
+        variable_data = ds_behavior_data.iloc[:, j]
+        
+        # Initialize an empty matrix to hold the time-lagged data for this variable
+        design_matrix = np.empty((ds_neural_data.shape[0] - bin_size + 1, bin_size))
+        
+        # Populate the design matrix with time-lagged data
+        for start in range(ds_neural_data.shape[0] - bin_size + 1):
+            temp_vector = variable_data.iloc[start:start + bin_size].values
+            design_matrix[start, :] = temp_vector
+        
+        # Convert the design matrix for this variable to a DataFrame with labeled columns
+        design_df = pd.DataFrame(design_matrix, columns=[f"{ds_behavior_data.columns[j]}_lag_{k+1}" for k in range(bin_size)])
+        matrices_list.append(design_df)
+
+    # Step 2: Concatenate all time-lagged matrices column-wise to form the final design matrix
+    final_design_matrix = pd.concat(matrices_list, axis=1)
+
+    return final_design_matrix
+
+
+
+#############################################################################################################################
+def model_fit(ds_neural_data, final_design_matrix, ds_behavior_data, bin_size=5, normalization_start=0, normalization_end=None):
+    """
+    This function regresses each neuron on the behavior variables and stores the beta coefficients and p-values.
+    
+    Args:
+        ds_neural_data (pd.DataFrame): Downsampled neural data.
+        final_design_matrix (pd.DataFrame): The final design matrix from calculate_design_matrix function.
+        ds_behavior_data (pd.DataFrame): Downsampled behavior data with column names.
+        bin_size (int): Time kernel in terms of bins. Must match bin size in calculate_design_matrix function. Default is 5.
+        normalization_start (int): Row index for the start of normalization period. Default is 0.
+        normalization_end (int or None): Row index for the end of normalization period. Default is None (entire session).
+    
+    Returns:
+        beta_coefficients_matrix_final (pd.DataFrame): DataFrame containing beta coefficients.
+        significance_matrix (pd.DataFrame): DataFrame containing p-values.
+    """
+    # Retrieve variable and neuron counts
+    number_of_variables = ds_behavior_data.shape[1]
+    num_neurons = ds_neural_data.shape[1]
+    
+    # Initialize matrices for storing results
+    significance_matrix = np.empty((num_neurons, number_of_variables))
+    beta_coefficients_matrix = np.empty((num_neurons, number_of_variables * bin_size + 2))  # +2 for intercept and autoregressive term
+
+    # Loop over each neuron to fit regression models
+    for neuron_k in range(num_neurons):
+        print(f"Processing neuron {neuron_k + 1}/{num_neurons}")
+        
+        # Normalize neural trace to the specified baseline
+        neural_trace = ds_neural_data.iloc[:, neuron_k]
+        if normalization_end is None:
+            normalization_end = len(neural_trace)
+        neural_trace = (neural_trace - neural_trace[normalization_start:normalization_end].mean()) / neural_trace[normalization_start:normalization_end].std()
+
+        # Prepare dependent variable and autoregressive term
+        neural_trace_y = neural_trace.iloc[bin_size - 1:].values
+        autoregressive_term = neural_trace.iloc[bin_size - 2:len(neural_trace) - 1].values
+        
+        # Combine autoregressive term with the design matrix
+        final_matrix = pd.concat([pd.DataFrame({'Autoregressive_Term': autoregressive_term}), final_design_matrix], axis=1)
+        
+        # Initialize a list to store p-values for each variable
+        p_values_vector = []
+
+        # Loop over each variable, dropping columns to test significance
+        for i in range(1, len(final_matrix.columns), bin_size):
+            cols = list(range(i, i + bin_size))
+            df_dropped_variable = final_matrix.drop(final_matrix.columns[cols], axis=1)
+            
+            # Fit the full and reduced models
+            model_full = sm.OLS(neural_trace_y, sm.add_constant(final_matrix)).fit()
+            model_reduced = sm.OLS(neural_trace_y, sm.add_constant(df_dropped_variable)).fit()
+            
+            # Perform ANOVA to compare models and get p-value
+            full_vs_reduced = sm.stats.anova_lm(model_reduced, model_full)
+            p_value = full_vs_reduced.iloc[1, -1]  # Assuming p-value is in the last column
+            p_values_vector.append(p_value)
+
+        # Store beta coefficients and p-values
+        beta_coefficients_matrix[neuron_k, :] = model_full.params
+        significance_matrix[neuron_k, :] = p_values_vector
+
+    # Convert matrices to DataFrames with appropriate column names
+    beta_coefficients_matrix_final = pd.DataFrame(beta_coefficients_matrix)
+    variable_names = ds_behavior_data.columns
+    final_names = [f"{var}_beta{k+1}" for var in variable_names for k in range(bin_size)]
+    beta_column_names = ['Intercept', 'Autoregressive_Term'] + final_names
+    beta_coefficients_matrix_final.columns = beta_column_names
+
+    significance_matrix_df = pd.DataFrame(significance_matrix, columns=variable_names)
+
+    return beta_coefficients_matrix_final, significance_matrix_df
+
