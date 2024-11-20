@@ -59,11 +59,12 @@ def downsample_behavior_data(behavior_data, frequency):
             output.fillna(method='bfill', inplace=True)
         
         # Reset the index to total seconds (from timedelta)
-        output.index = output.index.total_seconds()
+        #output.index = output.index.total_seconds()
 
         # Store the downsampled output in the new DataFrame
         ds_behavior_data[column] = output
-   
+       # Convert the index back to total seconds for the final DataFrame
+    ds_behavior_data.index = ds_behavior_data.index.total_seconds()
     return ds_behavior_data
     
 ################################################################
