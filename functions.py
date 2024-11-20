@@ -101,6 +101,7 @@ def downsample_neural_data(neural_data, frequency):
     ds_neural_data.index = ds_neural_data.index.total_seconds()
     
     return ds_neural_data
+
 ####################################################################################################
 # Function to plot multicollinearity diagnostics across multiple datasets
 def plot_diagnostics_analysis(df_list, title_list):
