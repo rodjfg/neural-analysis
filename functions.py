@@ -31,7 +31,11 @@ def downsample_behavior_data(behavior_data, frequency):
     - ds_behavior_data (pd.DataFrame): A Pandas DataFrame containing the downsampled behavior data.
     """
     # Set 'Time' column as the index of the behavior_data dataframe, converting it to timedelta (in seconds)
-    behavior_data = behavior_data.set_index(pd.to_timedelta(behavior_data['Time'], unit='s'))
+    # Dynamically get the name of the first column
+    time_column = behavior_data.columns[0]
+
+    # Set the first column as the index, converting it to timedelta (in seconds)
+    behavior_data = behavior_data.set_index(pd.to_timedelta(behavior_data[time_column], unit='s'))
 
     # Retrieve the list of column names
     list_of_column_names = list(behavior_data.columns)
