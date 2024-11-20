@@ -58,9 +58,10 @@ def downsample_neural_data(neural_data, frequency):
     return ds_neural_data
 ################################################################
 
-  # Neural Data Downsampling Function
+# Neural Data Downsampling Function
 # Here we are defining the neural data downsampling function
-# Named “def downsample_neural_data(neural_data, frequency):” in functions3 library
+# Named “def downsample_neural_data(neural_data, frequency)
+
 def downsample_neural_data(neural_data, frequency):
     """
     Downsample neural data to a specified frequency.
