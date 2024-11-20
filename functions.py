@@ -17,50 +17,45 @@ def clean_string(s):
 #######################################################################################################################
 #Behavior Downsampling Function
 
-def downsample_behavior_data(behavior_data, frequency):
+def downsample_neural_data(neural_data, frequency):
     """
-    Downsample behavior data to a specified frequency.
+    Downsample neural data to a specified frequency.
 
     Args:
-    - behavior_data (pd.DataFrame): A Pandas DataFrame containing the behavior data.
-    - frequency (str): The frequency to downsample to, in Pandas resample format (e.g., '500ms').
+    - neural_data (pd.DataFrame): A Pandas DataFrame containing the neural data.
+    - frequency (str): The frequency to downsample to, in Pandas resample format (e.g., '100ms').
 
     Returns:
-    - ds_behavior_data (pd.DataFrame): A Pandas DataFrame containing the downsampled behavior data.
+    - ds_neural_data (pd.DataFrame): A Pandas DataFrame containing the downsampled neural data.
     """
-    # Set 'Time' column as the index of the behavior_data dataframe, converting it to timedelta (in seconds)
-    behavior_data = behavior_data.set_index(pd.to_timedelta(behavior_data['Time'], unit='s'))
-
-    # Retrieve the list of column names
-    list_of_column_names = list(behavior_data.columns)
-
-    # Create an empty DataFrame where downsampled columns will be stored
-    ds_behavior_data = pd.DataFrame()
-
-    # Loop through each column for downsampling
-    for column in list_of_column_names:
-        if column in ['In platform', 'In REWARD ZONE', 'In Center']:
-            # For specific columns, take the last value within each resampling interval
-            output = behavior_data[column].resample(frequency).last()
-        else:
-            # For other columns, compute the mean within each resampling interval
-            output = behavior_data[column].resample(frequency).mean()
-        
-        # Handle missing data
-        if column in ['Tone', 'Shock']:
-            # For 'Tone' and 'Shock', fill NaN values with 0
-            output.fillna(0, inplace=True)
-        else:
-            # For other columns, backfill missing values
-            output.fillna(method='bfill', inplace=True)
-        
-        # Ensure the index remains a proper index
-        ds_behavior_data[column] = output
-
-    # Convert the index back to total seconds for the final DataFrame
-    ds_behavior_data.index = ds_behavior_data.index.total_seconds()
+    # Ensure the 'Time' column exists and is not in the data columns
+    if 'Time' not in neural_data.columns:
+        raise ValueError("'Time' column is missing in the input DataFrame.")
     
-    return ds_behavior_data
+    # Set 'Time' as the index after converting it to timedelta
+    neural_data = neural_data.set_index(pd.to_timedelta(neural_data['Time'], unit='s')).drop(columns=['Time'])
+
+    # Create an empty DataFrame to store downsampled data
+    ds_neural_data = pd.DataFrame()
+
+    # Retrieve a list of neuron (cell) column names
+    list_of_neuron_names = list(neural_data.columns)
+
+    # Loop through each neuron column, downsample, and store the result in a new DataFrame
+    for neuron in list_of_neuron_names:
+        # Remove missing values to ensure proper binning
+        output = neural_data[neuron].dropna()
+        
+        # Downsample by taking the mean of observations within the specified time range
+        output = output.resample(frequency).mean()
+        
+        # Store the downsampled neuron data in the ds_neural_data DataFrame
+        ds_neural_data[neuron] = output
+    
+    # Convert the final DataFrame index to total seconds
+    ds_neural_data.index = ds_neural_data.index.total_seconds()
+    
+    return ds_neural_data
 ################################################################
 
   # Neural Data Downsampling Function
