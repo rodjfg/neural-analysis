@@ -28,12 +28,8 @@ def downsample_behavior_data(behavior_data, frequency):
     Returns:
     - ds_behavior_data (pd.DataFrame): A Pandas DataFrame containing the downsampled behavior data.
     """
-   
     # Set 'Time' column as the index of the behavior_data dataframe, converting it to timedelta (in seconds)
     behavior_data = behavior_data.set_index(pd.to_timedelta(behavior_data['Time'], unit='s'))
-
-    # Add an intercept column (B0 = 1 is the convention)
-    #behavior_data = pd.concat([pd.Series(1, index=behavior_data.index, name='Intercept'), behavior_data], axis=1)
 
     # Retrieve the list of column names
     list_of_column_names = list(behavior_data.columns)
@@ -58,15 +54,13 @@ def downsample_behavior_data(behavior_data, frequency):
             # For other columns, backfill missing values
             output.fillna(method='bfill', inplace=True)
         
-        # Reset the index to total seconds (from timedelta)
-        #output.index = output.index.total_seconds()
-
-        # Store the downsampled output in the new DataFrame
+        # Ensure the index remains a proper index
         ds_behavior_data[column] = output
-       # Convert the index back to total seconds for the final DataFrame
+
+    # Convert the index back to total seconds for the final DataFrame
     ds_behavior_data.index = ds_behavior_data.index.total_seconds()
-    return ds_behavior_data
     
+    return ds_behavior_data
 ################################################################
 
   # Neural Data Downsampling Function
