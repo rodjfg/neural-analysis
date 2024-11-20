@@ -77,7 +77,6 @@ def downsample_neural_data(neural_data, frequency):
     Returns:
     - ds_neural_data (pd.DataFrame): A Pandas DataFrame containing the downsampled neural data.
     """
-       
     # Create an empty DataFrame where downsampled columns will be stored
     ds_neural_data = pd.DataFrame()
     
@@ -95,14 +94,13 @@ def downsample_neural_data(neural_data, frequency):
         # Downsample by taking the mean of observations within the specified time range
         output = output.resample(frequency).mean()
         
-        # Set the time index to total seconds
-        output.index = output.index.total_seconds()
-        
         # Store the downsampled neuron data in the ds_neural_data DataFrame
         ds_neural_data[neuron] = output
     
+    # Set the index of the final DataFrame to total seconds
+    ds_neural_data.index = ds_neural_data.index.total_seconds()
+    
     return ds_neural_data
-
 ####################################################################################################
 # Function to plot multicollinearity diagnostics across multiple datasets
 def plot_diagnostics_analysis(df_list, title_list):
