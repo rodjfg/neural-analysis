@@ -6,6 +6,8 @@ from matplotlib.ticker import MultipleLocator
 import seaborn as sns
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.preprocessing import StandardScaler
+import statsmodels.api as sm
+
 
 #######################################################################################################################
 scaler = StandardScaler()
