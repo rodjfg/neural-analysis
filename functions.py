@@ -281,8 +281,7 @@ def model_fit(ds_neural_data, final_design_matrix, ds_behavior_data, bin_size=5,
         neural_trace = ds_neural_data.iloc[:, neuron_k]
         if normalization_end is None:
             normalization_end = len(neural_trace)
-        neural_trace = (neural_trace - neural_trace[normalization_start:normalization_end].mean()) / neural_trace[normalization_start:normalization_end].std()
-
+        neural_trace = (neural_trace - neural_trace.loc[normalization_start:normalization_end].mean()) / neural_trace.loc[normalization_start:normalization_end].std()
         # Prepare dependent variable and autoregressive term
         neural_trace_y = neural_trace.iloc[bin_size - 1:].values
         autoregressive_term = neural_trace.iloc[bin_size - 2:len(neural_trace) - 1].values
