@@ -287,14 +287,14 @@ def model_fit(ds_neural_data, final_design_matrix, ds_behavior_data, bin_size=5,
         autoregressive_term = neural_trace.iloc[bin_size - 2:len(neural_trace) - 1].values
         
         # Create a DataFrame to display the variables side by side
-        data_to_check = pd.DataFrame({
-            'neural_trace': neural_trace.iloc[:len(neural_trace_y)].values,  # Align neural_trace with neural_trace_y
-            'neural_trace_y': neural_trace_y,  # Dependent variable
-            'autoregressive_term': autoregressive_term  # Autoregressive term
-            })
+        #data_to_check = pd.DataFrame({
+            #'neural_trace': neural_trace.iloc[:len(neural_trace_y)].values,  # Align neural_trace with neural_trace_y
+            #'neural_trace_y': neural_trace_y,  # Dependent variable
+            #'autoregressive_term': autoregressive_term  # Autoregressive term
+           # })
 
         # Display the first few rows
-        print(data_to_check.head())
+        #print(data_to_check.head())
         
         # Combine autoregressive term with the design matrix
         final_matrix = pd.concat([pd.DataFrame({'Autoregressive_Term': autoregressive_term}), final_design_matrix], axis=1)
