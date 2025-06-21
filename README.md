@@ -24,7 +24,7 @@ BehaviorNeuroLink is a Python package for analyzing the relationship between neu
 
 ## Getting Started:
 
-Check out our [documentation](https://behavioralneuralregressor.readthedocs.io) for installation instructions, tutorials, and API reference.
+Check out our [documentation](https://neural-analysis.readthedocs.io/en/latest/) for installation instructions, tutorials, and API reference.
 
 ## Citation:
 
