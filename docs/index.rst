@@ -1,14 +1,12 @@
-Welcome to neural-analysis's documentation!
+Welcome to neural-analysis’s documentation!
 ===========================================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Main Contents
 
    framework
 
-
-   
 Indices and tables
 ==================
 
